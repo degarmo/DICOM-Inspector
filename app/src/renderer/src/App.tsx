@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 
 import { DiffTable } from './components/DiffTable'
 import { ErrorBanner } from './components/ErrorBanner'
+import { ExportControls, type ExportState } from './components/ExportControls'
 import { FilterBar } from './components/FilterBar'
 import { Kbd } from './components/Kbd'
 import { LoadPanel } from './components/LoadPanel'
@@ -11,6 +12,7 @@ import { SummaryBar } from './components/SummaryBar'
 import { WarningsBanner } from './components/WarningsBanner'
 import { useComparison } from './hooks/useComparison'
 import { useShortcuts } from './hooks/useShortcuts'
+import type { AppError, ExportFormat } from '../../shared/api'
 import { DEFAULT_FILTERS, filterRows, type Filters } from './lib/filters'
 
 export function App(): React.JSX.Element {
@@ -21,6 +23,9 @@ export function App(): React.JSX.Element {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [warningsDismissed, setWarningsDismissed] = useState(false)
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('html')
+  const [exportState, setExportState] = useState<ExportState>({ phase: 'idle' })
+  const [exportError, setExportError] = useState<AppError | null>(null)
 
   // Each new result starts with "Differences only" on, warnings visible and nothing selected.
   const runCompare = async (): Promise<void> => {
@@ -29,6 +34,26 @@ export function App(): React.JSX.Element {
     setFilters((current) => ({ ...current, differencesOnly: true }))
     setWarningsDismissed(false)
     setSelectedPath(null)
+    setExportState({ phase: 'idle' })
+    setExportError(null)
+  }
+
+  const runExport = async (): Promise<void> => {
+    if (!result || exportState.phase === 'saving') return
+    setExportState({ phase: 'saving' })
+    setExportError(null)
+    try {
+      const outcome = await window.inspector.exportReport(result, exportFormat)
+      if (outcome.ok) {
+        setExportState({ phase: 'saved', path: outcome.path })
+      } else {
+        setExportState({ phase: 'idle' })
+        if (!outcome.canceled) setExportError(outcome.error)
+      }
+    } catch (error) {
+      setExportState({ phase: 'idle' })
+      setExportError({ code: 'export_failed', message: error instanceof Error ? error.message : String(error) })
+    }
   }
 
   const visibleRows = useMemo(() => (result ? filterRows(result.rows, filters) : []), [result, filters])
@@ -38,7 +63,7 @@ export function App(): React.JSX.Element {
     openA: () => void comparison.browse('a'),
     openB: () => void comparison.browse('b'),
     compare: () => void runCompare(),
-    exportReport: () => undefined,
+    exportReport: () => void runExport(),
   })
 
   return (
@@ -54,6 +79,13 @@ export function App(): React.JSX.Element {
           <Lock className="size-3" aria-hidden />
           Local, read-only
         </span>
+        <ExportControls
+          enabled={result !== null}
+          format={exportFormat}
+          state={result ? exportState : { phase: 'idle' }}
+          onFormatChange={setExportFormat}
+          onExport={() => void runExport()}
+        />
       </header>
       <LoadPanel
         files={files}
@@ -69,6 +101,9 @@ export function App(): React.JSX.Element {
       />
       {run.phase === 'error' && (
         <ErrorBanner error={run.error} files={files} force={force} onDismiss={comparison.dismissError} />
+      )}
+      {exportError && (
+        <ErrorBanner error={exportError} files={files} force={force} onDismiss={() => setExportError(null)} />
       )}
       {result && result.warnings.length > 0 && !warningsDismissed && (
         <WarningsBanner warnings={result.warnings} onDismiss={() => setWarningsDismissed(true)} />

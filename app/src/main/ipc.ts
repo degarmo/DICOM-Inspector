@@ -3,8 +3,10 @@ import { basename } from 'node:path'
 
 import { BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 
-import { IPC, type PickedFile } from '../shared/api'
+import { IPC, type ExportOutcome, type PickedFile } from '../shared/api'
+import { parseCompareResult, SchemaError } from '../shared/validate'
 import { runCompare } from './engineRunner'
+import { exportReport } from './exportReport'
 import { isTrustedSender } from './security'
 
 export function registerIpc(): void {
@@ -34,6 +36,19 @@ export function registerIpc(): void {
     }
     const force = typeof opts === 'object' && opts !== null && (opts as { force?: unknown }).force === true
     return runCompare(a, b, { force })
+  })
+
+  ipcMain.handle(IPC.exportReport, async (event, result: unknown, format: unknown): Promise<ExportOutcome> => {
+    assertTrusted(event)
+    if (format !== 'html' && format !== 'pdf') throw new TypeError('format must be "html" or "pdf"')
+    let validated
+    try {
+      validated = parseCompareResult(result)
+    } catch (error) {
+      if (!(error instanceof SchemaError)) throw error
+      return { ok: false, canceled: false, error: { code: 'export_failed', message: error.message } }
+    }
+    return exportReport(BrowserWindow.fromWebContents(event.sender), validated, format)
   })
 }
 
