@@ -1,7 +1,7 @@
 # electron-builder configuration: Windows NSIS installer, x64.
 # Build with build/build_windows.ps1 (repo root), which freezes the engine first.
+# The product name ("DICOM Inspector") and version come from package.json.
 appId: com.degarmo.dicominspector
-productName: DICOM Inspector
 copyright: Copyright 2026 DICOM Inspector
 
 directories:

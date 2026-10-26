@@ -1,5 +1,6 @@
 {
   "name": "dicom-inspector-app",
+  "productName": "DICOM Inspector",
   "version": "0.1.0",
   "private": true,
   "description": "Desktop interface for the DICOM Inspector comparison engine.",

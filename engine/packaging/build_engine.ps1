@@ -61,6 +61,9 @@ function Invoke-Engine {
 Push-Location $EngineDir
 try {
     Write-Host '==> Checking Python'
+    if (-not (Get-Command $Python -ErrorAction SilentlyContinue)) {
+        throw "Python interpreter '$Python' was not found. Install Python 3.11+ or pass -Python <path to python.exe>."
+    }
     # No quotes inside the -c program, so argument passing cannot mangle it.
     $version = & $Python -c 'import sys; print(*sys.version_info[:2], sep=chr(46)); raise SystemExit(sys.version_info < (3, 11))'
     if ($LASTEXITCODE -ne 0) { throw "Python 3.11+ is required; '$Python' is $version." }
