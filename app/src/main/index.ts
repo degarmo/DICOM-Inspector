@@ -2,6 +2,7 @@ import { join } from 'node:path'
 
 import { app, BrowserWindow, nativeTheme } from 'electron'
 
+import { registerIpc } from './ipc'
 import { configureSecurity } from './security'
 
 const devServerUrl = app.isPackaged ? undefined : process.env['ELECTRON_RENDERER_URL']
@@ -38,6 +39,7 @@ function createWindow(): BrowserWindow {
 
 void app.whenReady().then(() => {
   configureSecurity(devServerUrl)
+  registerIpc()
   createWindow()
 
   app.on('activate', () => {

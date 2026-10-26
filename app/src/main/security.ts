@@ -39,6 +39,18 @@ export function isLocalRequest(url: string): boolean {
   return (parsed.protocol === 'ws:' || parsed.protocol === 'wss:') && parsed.host === devOrigin.host
 }
 
+/** IPC is only accepted from the app's own page. */
+export function isTrustedSender(frameUrl: string | undefined): boolean {
+  if (!frameUrl) return false
+  try {
+    const url = new URL(frameUrl)
+    if (allowedDevOrigin !== null) return url.origin === allowedDevOrigin
+    return url.protocol === 'file:'
+  } catch {
+    return false
+  }
+}
+
 function hardenWebContents(contents: WebContents): void {
   contents.setWindowOpenHandler(() => ({ action: 'deny' }))
   contents.on('will-navigate', (event, url) => {
