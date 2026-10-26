@@ -116,20 +116,20 @@ export function App(): React.JSX.Element {
           {selectedRow && <RowDetails row={selectedRow} onClose={() => setSelectedPath(null)} />}
         </>
       ) : (
-        <EmptyState running={run.phase === 'running'} />
+        <EmptyState running={run.phase === 'running'} ready={Boolean(files.a && files.b)} />
       )}
     </div>
   )
 }
 
-function EmptyState({ running }: { running: boolean }): React.JSX.Element {
+function EmptyState({ running, ready }: { running: boolean; ready: boolean }): React.JSX.Element {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted">
       {running ? (
         <p>Running the comparison engine...</p>
       ) : (
         <>
-          <p>Choose File A and File B, then compare.</p>
+          <p>{ready ? 'Press Compare to run the comparison.' : 'Choose File A and File B, then compare.'}</p>
           <p className="flex items-center gap-2 text-xs text-faint">
             Open A <Kbd keys="Mod+O" /> Open B <Kbd keys="Mod+Shift+O" /> Compare <Kbd keys="Mod+Enter" />
           </p>
