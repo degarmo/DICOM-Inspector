@@ -48,7 +48,7 @@ class Summary:
 
 
 @dataclass(frozen=True)
-class Warning:
+class ReportWarning:
     code: str
     message: str
     file: FileLabel | None = None
@@ -77,7 +77,7 @@ class Row:
 class Report:
     files: dict[FileLabel, FileInfo]
     summary: Summary
-    warnings: list[Warning]
+    warnings: list[ReportWarning]
     rows: list[Row]
     schema_version: str = field(default=SCHEMA_VERSION)
 
