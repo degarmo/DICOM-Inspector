@@ -1,0 +1,35 @@
+# Mismatch catalog
+
+The 20 synthetic scenarios in `engine/tests/scenarios/`. Each one plants a
+header mismatch that breaks real imaging integrations into a copy of a
+synthetic nuclear cardiology study, and the test suite checks that DICOM
+Inspector reports exactly that difference.
+
+Generated from the scenario specs by `python engine/tests/scenarios/build_scenarios.py --catalog`.
+
+| # | Scenario | What changed | Real-world symptom | Priority |
+| - | -------- | ------------ | ------------------ | -------- |
+| 1 | **Issuer of Patient ID differs** (`01_issuer_mismatch`) | Same Patient ID (00012345) in both files, but IssuerOfPatientID is SYNTH-HOSP-A in A and SYNTH-HOSP-B in B. | Cross-facility identity collision: an MPI or PACS that ignores the issuer merges two different patients who share an MRN, or rejects the study as a mismatch. | Yes |
+| 2 | **Patient ID leading zeros stripped** (`02_patient_id_leading_zeros`) | PatientID is 00012345 in A and 12345 in B, as when an interface treats the MRN as a number. | Exact-match patient lookup fails, so the study lands as unmatched or creates a duplicate patient. | Yes |
+| 3 | **Accession Number missing** (`03_accession_missing`) | AccessionNumber is present in A and the element is removed entirely from B. | The study cannot be matched to its order: reports never reconcile and the worklist entry stays open. | Yes |
+| 4 | **Accession Number present but empty** (`04_accession_blank`) | AccessionNumber is SYNACC000123 in A; in B the element exists but has an empty value. | Looks like a missing order to the RIS, but schema checks that only test for presence pass; a classic silent order-matching failure. | Yes |
+| 5 | **Patient Name trailing component separators** (`05_patient_name_format`) | PatientName is TEST^CARDIO in A and TEST^CARDIO^^^ in B: the same name with empty trailing components. | Systems that compare names as raw strings see two different patients and flag a demographics mismatch at reconciliation. | No |
+| 6 | **Study Instance UID regenerated** (`06_study_uid_regenerated`) | B has a new StudyInstanceUID; every other element, including the related-series reference, is unchanged. | The images split into a second study: priors and comparisons break and the report attaches to only one of them. | Yes |
+| 7 | **Rest and stress Series UIDs swapped** (`07_series_uids_swapped`) | In B the rest image carries the stress SeriesInstanceUID, and its Related Series reference points back at the rest series. | Rest images are filed under the stress series: the processing workstation pairs the wrong acquisitions for perfusion analysis. | Yes |
+| 8 | **SOP Class differs** (`08_sop_class_differs`) | B is labelled Secondary Capture Image Storage instead of Nuclear Medicine Image Storage (file meta follows). | The receiving system routes or renders the object as a screenshot: NM-specific processing and hanging protocols never trigger, or C-STORE is rejected. | Yes |
+| 9 | **Study Date shifted by midnight rollover** (`09_study_date_rollover`) | StudyDate is 20250314 in A and 20250315 in B, as when a time zone or clock conversion crosses midnight. | Date-range queries and prior-study matching miss the exam; the study shows the wrong day on the worklist. | Yes |
+| 10 | **Study Time with fractional seconds** (`10_study_time_fraction`) | StudyTime is 081530 in A and 081530.000000 in B: the same instant, formatted differently. | Interfaces that match on the exact string (or truncate fields) treat the same exam as two, or fail validation on field length. | Yes |
+| 11 | **Timezone offset in one file only** (`11_timezone_offset_only_b`) | TimezoneOffsetFromUTC (-0500) is present in B and absent from A. | One system shifts displayed times by the offset and the other does not, so acquisition and report times disagree by hours. | No |
+| 12 | **Character set Latin-1 vs UTF-8** (`12_charset_latin1_vs_utf8`) | Both files hold the accented name TÉST^CARDIO^SYNTH; A declares ISO_IR 100 (Latin-1) and B ISO_IR 192 (UTF-8). The bytes differ but both decode to the same text. | Harmless when both sides honour the declared charset; when one side ignores it, names show as mojibake (TÃ‰ST instead of TÉST). The tool shows that only the charset changed. | Yes |
+| 13 | **Character set declared wrong for the bytes** (`13_charset_mislabeled`) | Both files carry the Latin-1 bytes of TÉST^CARDIO^SYNTH, but B declares ISO_IR 192 (UTF-8), which those bytes are not valid in. | Garbled or rejected patient names after a gateway relabels the charset; some receivers crash on decode. The tool warns and shows B's name as raw bytes. | Yes |
+| 14 | **Difference three sequence levels deep** (`14_nested_three_levels`) | The stress-agent text inside RequestAttributesSequence > ScheduledProtocolCodeSequence > ProtocolContextSequence differs (AGENT A vs AGENT B). | Protocol details buried in nested sequences drive downstream processing and billing, yet are invisible in most viewers' top-level tag lists. | No |
+| 15 | **Sequence item count differs** (`15_sequence_item_count`) | EnergyWindowInformationSequence has 2 energy windows in A and 3 in B. | Reconstruction or scatter correction picks the wrong window by index, producing quantitatively different images. | No |
+| 16 | **Private block present only in B** (`16_private_block_only_b`) | B carries an extra private block (group 0029, creator SYNTH_VENDOR_02) that A does not have. | Vendor-specific processing parameters appear after an upgrade or a different gateway path; downstream tools behave differently with no visible cause. | Yes |
+| 17 | **Same private tags, different private creator** (`17_private_creator_differs`) | The private block in group 0019 has identical values in both files, but its creator is SYNTH_VENDOR_01 in A and SYNTH_VENDOR_02 in B. | The same tag numbers now mean something else: a vendor application reads another vendor's data as its own parameters. | Yes |
+| 18 | **Explicit vs Implicit VR transfer syntax** (`18_explicit_vs_implicit_vr`) | A is Explicit VR Little Endian, B is Implicit VR Little Endian. Every value is the same, but implicit VR cannot carry the VR of private tags, so they read back as UN. | After a forward through a gateway that re-encodes to Implicit VR, private tags lose their VRs (become UN) and vendor applications can no longer interpret them. | Yes |
+| 19 | **Same tag with a different VR** (`19_vr_differs`) | StudyDescription has the same value in both files but is encoded as LO in A and SH in B. | Strict validators reject the object; receivers that size fields from the VR truncate the value (SH allows 16 characters, LO 64). | No |
+| 20 | **Identical pair** (`20_identical`) | No changes. Both files are generated from the same baseline. | The control case: a clean pair must produce zero differences, so any reported row is real. | n/a (no differences) |
+
+Priority means at least one reported row has `is_priority: true`: an
+integration-critical tag (patient and study identity, UIDs, SOP Class,
+dates, character set, transfer syntax) or any private tag.

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from build_scenarios import DEMO_DIR, DEMO_SCENARIOS, load_specs
+from build_scenarios import CATALOG_PATH, DEMO_DIR, DEMO_SCENARIOS, load_specs, render_catalog
 from dicom_inspector.cli import run_compare
 
 SPECS = load_specs()
@@ -66,3 +66,10 @@ def test_demo_pairs_are_current(name, scenario_pairs):
         assert committed.read_bytes() == generated.read_bytes(), (
             f"{committed} is out of date; run python tests/scenarios/build_scenarios.py --demo"
         )
+
+
+def test_mismatch_catalog_is_current():
+    """docs/MISMATCH_CATALOG.md is generated from the specs; it must not drift."""
+    assert CATALOG_PATH.read_text(encoding="utf-8") == render_catalog(SPECS), (
+        "docs/MISMATCH_CATALOG.md is out of date; run python tests/scenarios/build_scenarios.py --catalog"
+    )

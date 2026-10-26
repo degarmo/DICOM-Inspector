@@ -11,7 +11,8 @@ update checks. The installed app needs no Python or Node.js.
 | `engine/`  | Python comparison engine and CLI. It prints a JSON diff (`schema_version` "1.0"). See [engine/README.md](engine/README.md). `engine/packaging/` freezes it into a standalone executable. |
 | `app/`     | Electron + React desktop interface. It runs the engine as a child process and reads its JSON. |
 | `build/`   | Windows installer build: `build_windows.ps1`, the CI smoke test and the notices generator.    |
-| `docs/`    | [Clean-machine test checklist](docs/CLEAN_MACHINE_TEST.md).                                   |
+| `docs/`    | [Clean-machine test checklist](docs/CLEAN_MACHINE_TEST.md) and the [mismatch catalog](docs/MISMATCH_CATALOG.md). |
+| `demo/`    | Three synthetic file pairs and a [walkthrough script](demo/README.md) for demos (repo only, not in the installer). |
 
 ## Prerequisites (development)
 
@@ -59,6 +60,50 @@ npm run dev
 
 To try it, drop `engine/tests/fixtures/05_private_block_a.dcm` on File A and
 `05_private_block_b.dcm` on File B, then press Ctrl+Enter (Cmd+Enter on macOS).
+
+## Synthetic mismatch scenarios
+
+`engine/tests/scenarios/` proves the tool catches header mismatches that break
+real imaging integrations. One synthetic nuclear cardiology baseline (rest/stress
+myocardial perfusion, NM Image Storage, fake demographics, a `SYNTH_VENDOR_01`
+private block) is turned into 20 file pairs. Each is defined by a JSON spec in
+`specs/` listing the planted changes and the exact rows and warnings the engine
+must report. All 20 are listed with their real-world symptoms in
+[docs/MISMATCH_CATALOG.md](docs/MISMATCH_CATALOG.md). All data is synthetic.
+
+Run the whole engine suite (Phase 1 fixtures, scenarios, goldens, robustness and
+regression tests) from `engine/`:
+
+```sh
+.venv/bin/pytest                    # everything
+.venv/bin/pytest tests/scenarios    # scenarios and golden files only
+```
+
+**Golden files.** `tests/scenarios/goldens/<name>.json` holds the full engine
+output for each scenario, with `files.*.path` normalized. The tests compare
+`python -m dicom_inspector` output to them byte for byte. If the frozen engine
+has been built (`engine/dist/`), they also run against it; the pytest header says
+which engines ran. A stale or missing golden fails the suite. After an
+intentional output change, regenerate them and review the diff:
+
+```sh
+.venv/bin/pytest tests/scenarios --update-goldens
+git diff tests/scenarios/goldens
+```
+
+**Adding a scenario** means adding a spec: copy one in `specs/`, change the
+`changes` and `expected` blocks, then run `--update-goldens`. The generator also
+has a command line:
+
+```sh
+.venv/bin/python tests/scenarios/build_scenarios.py /tmp/pairs   # write every pair as <name>/A.dcm, B.dcm
+.venv/bin/python tests/scenarios/build_scenarios.py --demo       # refresh demo/pairs/
+.venv/bin/python tests/scenarios/build_scenarios.py --catalog    # refresh docs/MISMATCH_CATALOG.md
+```
+
+The app's tests (`npm test` in `app/`) load the same golden outputs to check the
+UI: priority pinning, nested paths, the encoding warning banner, the
+identical-pair empty state, and HTML reports.
 
 ## Build the Windows installer
 

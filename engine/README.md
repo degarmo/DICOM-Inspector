@@ -66,7 +66,7 @@ On exit 1 or 2, stdout is empty and stderr carries one line of JSON:
 | `not_a_file`     | 2    | Path is a directory or other non-regular file.                 |
 | `unreadable`     | 2    | The OS refused the read (permissions, I/O error).              |
 | `not_dicom`      | 2    | No DICOM prefix (without `--force`), or unparseable even with it. |
-| `invalid_dicom`  | 2    | Has the DICOM prefix but the content could not be parsed.      |
+| `invalid_dicom`  | 2    | The content could not be parsed, the file is truncated (cut off inside an element), or it has no data set. |
 | `usage_error`    | 1    | Bad arguments. `file` is `null`.                               |
 | `internal_error` | 1    | Bug in the engine. `file` is `null`.                           |
 
