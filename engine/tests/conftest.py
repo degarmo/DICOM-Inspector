@@ -22,6 +22,27 @@ def fixtures() -> dict[str, make_fixtures.Pair]:
     return make_fixtures.build_all(make_fixtures.FIXTURE_DIR)
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--update-goldens",
+        action="store_true",
+        help="Rewrite tests/scenarios/goldens/*.json from the current engine output.",
+    )
+
+
+def pytest_report_header(config: pytest.Config) -> str:
+    from test_goldens import ENGINES, FROZEN_EXE
+
+    if "frozen" in ENGINES:
+        return f"golden tests: python engine and frozen engine ({FROZEN_EXE})"
+    return f"golden tests: python engine only (frozen engine not built at {FROZEN_EXE})"
+
+
+@pytest.fixture(scope="session")
+def update_goldens(request: pytest.FixtureRequest) -> bool:
+    return bool(request.config.getoption("--update-goldens"))
+
+
 @pytest.fixture(scope="session")
 def scenario_pairs(tmp_path_factory) -> dict[str, tuple[Path, Path]]:
     """Generate every scenario pair (tests/scenarios/specs) once per session."""
