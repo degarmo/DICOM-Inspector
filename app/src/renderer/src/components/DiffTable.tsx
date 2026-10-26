@@ -10,7 +10,7 @@ import { StatusBadge } from '../lib/status'
 
 export const ROW_HEIGHT = 30
 const GROUP_HEIGHT = 28
-const GRID = 'grid grid-cols-[150px_minmax(240px,1.3fr)_72px_minmax(160px,1fr)_minmax(160px,1fr)_118px]'
+const GRID = 'grid grid-cols-[150px_minmax(260px,2.2fr)_72px_minmax(160px,1fr)_minmax(160px,1fr)_118px]'
 
 const features = tableFeatures({})
 const helper = createColumnHelper<typeof features, Row>()

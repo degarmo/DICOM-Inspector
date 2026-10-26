@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from build_scenarios import load_specs
+from build_scenarios import DEMO_DIR, DEMO_SCENARIOS, load_specs
 from dicom_inspector.cli import run_compare
 
 SPECS = load_specs()
@@ -56,3 +56,13 @@ def test_baseline_is_a_valid_nm_rest_study(scenario_pairs):
     assert values["(0019,0010)"] == "SYNTH_VENDOR_01"
     assert len(report["rows"]) >= 80
     assert report["warnings"] == []
+
+
+@pytest.mark.parametrize("name", DEMO_SCENARIOS)
+def test_demo_pairs_are_current(name, scenario_pairs):
+    """demo/pairs/ ships in the repo; it must match what the generator produces."""
+    for generated, label in zip(scenario_pairs[name], ("A", "B")):
+        committed = DEMO_DIR / name / f"{label}.dcm"
+        assert committed.read_bytes() == generated.read_bytes(), (
+            f"{committed} is out of date; run python tests/scenarios/build_scenarios.py --demo"
+        )
