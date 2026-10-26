@@ -34,7 +34,7 @@ EXTRA_FLAGS: dict[str, list[list[str]]] = {
     "09_not_dicom": [["--force"]],
     "10_no_preamble": [["--force"], ["--force", "--only-diffs"]],
 }
-PATH_PLACEHOLDER = b'"<path>"'
+PATH_MASK = b'"<path>"'
 
 
 def run(command: list[str], cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess[bytes]:
@@ -49,8 +49,8 @@ def without_file_paths(stdout: bytes) -> bytes:
         return stdout
     for label in ("a", "b"):
         encoded = json.dumps(files[label]["path"], ensure_ascii=True).encode("ascii")
-        stdout = stdout.replace(b'"path":' + encoded, b'"path":' + PATH_PLACEHOLDER)
-        stdout = stdout.replace(b'"path": ' + encoded, b'"path": ' + PATH_PLACEHOLDER)
+        stdout = stdout.replace(b'"path":' + encoded, b'"path":' + PATH_MASK)
+        stdout = stdout.replace(b'"path": ' + encoded, b'"path": ' + PATH_MASK)
     return stdout
 
 
