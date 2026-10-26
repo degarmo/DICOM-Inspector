@@ -1,0 +1,64 @@
+# electron-builder configuration: Windows NSIS installer, x64.
+# Build with build/build_windows.ps1 (repo root), which freezes the engine first.
+appId: com.degarmo.dicominspector
+productName: DICOM Inspector
+copyright: Copyright 2026 DICOM Inspector
+
+directories:
+  output: ../release
+  buildResources: build
+
+# Only the electron-vite output is packaged. The renderer bundles its own
+# dependencies, so no node_modules are needed at run time.
+files:
+  - out/**/*
+  - package.json
+  - "!node_modules/**/*"
+asar: true
+npmRebuild: false
+electronLanguages:
+  - en-US
+
+# The frozen engine must stay outside app.asar: executables cannot run from inside it.
+extraResources:
+  - from: ../engine/dist/dicom_inspector_engine
+    to: engine
+extraFiles:
+  - from: build/THIRD_PARTY_NOTICES.txt
+    to: THIRD_PARTY_NOTICES.txt
+
+# No auto-update feed: without a publish config electron-builder writes no
+# app-update.yml, and the app does not depend on electron-updater.
+publish: null
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  executableName: DICOM Inspector
+  # Signing runs only when CSC_LINK (or WIN_CSC_LINK) and CSC_KEY_PASSWORD are
+  # set; without them electron-builder skips signing and the build succeeds.
+  signtoolOptions:
+    signingHashAlgorithms:
+      - sha256
+
+nsis:
+  artifactName: DICOM-Inspector-Setup-${version}.${ext}
+  oneClick: false
+  # Per-user by default; the install-mode page offers "Anyone who uses this computer".
+  perMachine: false
+  selectPerMachineByDefault: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createStartMenuShortcut: true
+  # The desktop shortcut is an opt-in checkbox on the finish page (build/installer.nsh).
+  createDesktopShortcut: false
+  shortcutName: DICOM Inspector
+  uninstallDisplayName: DICOM Inspector
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  deleteAppDataOnUninstall: true
+  differentialPackage: false
+  include: build/installer.nsh

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>DICOM Inspector</title>
+  <rect x="8" y="8" width="240" height="240" rx="52" fill="#2457c5"/>
+  <rect x="58" y="36" width="104" height="140" rx="14" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="14"/>
+  <path d="M106 80H158L196 118V206A14 14 0 0 1 182 220H106A14 14 0 0 1 92 206V94A14 14 0 0 1 106 80Z" fill="#2457c5" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M158 80V118H196" fill="none" stroke="#ffffff" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M118 152H170" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+  <path d="M118 184H152" stroke="#f0b44c" stroke-width="14" stroke-linecap="round"/>
+</svg>

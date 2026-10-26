@@ -4,6 +4,7 @@ import { app, session, type WebContents } from 'electron'
  * Hardening applied to every window:
  * - all network requests are cancelled (only local app files are allowed),
  * - every permission request (camera, notifications, ...) is denied,
+ * - the spellchecker is off, so Chromium never downloads dictionaries,
  * - navigation away from the app entry and window.open are blocked.
  */
 
@@ -13,6 +14,7 @@ export function configureSecurity(devServerUrl: string | undefined): void {
   allowedDevOrigin = devServerUrl ? new URL(devServerUrl).origin : null
 
   const ses = session.defaultSession
+  ses.setSpellCheckerEnabled(false)
   ses.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
   ses.setPermissionCheckHandler(() => false)
   ses.webRequest.onBeforeRequest((details, callback) => {
