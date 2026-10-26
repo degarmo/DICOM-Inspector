@@ -1,0 +1,29 @@
+{
+  "name": "08_sop_class_differs",
+  "title": "SOP Class differs",
+  "description": "B is labelled Secondary Capture Image Storage instead of Nuclear Medicine Image Storage (file meta follows).",
+  "symptom": "The receiving system routes or renders the object as a screenshot: NM-specific processing and hanging protocols never trigger, or C-STORE is rejected.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "SOPClassUID",
+      "value": "1.2.840.10008.5.1.4.1.1.7"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0002,0002)",
+        "status": "different",
+        "is_priority": false
+      },
+      {
+        "path": "(0008,0016)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

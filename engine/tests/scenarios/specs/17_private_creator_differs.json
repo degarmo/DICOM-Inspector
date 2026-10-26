@@ -1,0 +1,39 @@
+{
+  "name": "17_private_creator_differs",
+  "title": "Same private tags, different private creator",
+  "description": "The private block in group 0019 has identical values in both files, but its creator is SYNTH_VENDOR_01 in A and SYNTH_VENDOR_02 in B.",
+  "symptom": "The same tag numbers now mean something else: a vendor application reads another vendor's data as its own parameters.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "(0019,0010)",
+      "value": "SYNTH_VENDOR_02"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0019,0010)",
+        "status": "different",
+        "is_priority": true
+      },
+      {
+        "path": "(0019,1001)",
+        "status": "different",
+        "is_priority": true
+      },
+      {
+        "path": "(0019,1002)",
+        "status": "different",
+        "is_priority": true
+      },
+      {
+        "path": "(0019,1003)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "12_charset_latin1_vs_utf8",
+  "title": "Character set Latin-1 vs UTF-8",
+  "description": "Both files hold the accented name TÉST^CARDIO^SYNTH; A declares ISO_IR 100 (Latin-1) and B ISO_IR 192 (UTF-8). The bytes differ but both decode to the same text.",
+  "symptom": "Harmless when both sides honour the declared charset; when one side ignores it, names show as mojibake (TÃST). The tool shows only the charset changed.",
+  "changes": [
+    {
+      "file": "both",
+      "op": "set",
+      "path": "PatientName",
+      "value": "TÉST^CARDIO^SYNTH"
+    },
+    {
+      "file": "b",
+      "op": "set",
+      "path": "SpecificCharacterSet",
+      "value": "ISO_IR 192"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,0005)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

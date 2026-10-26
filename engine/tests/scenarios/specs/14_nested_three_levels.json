@@ -1,0 +1,24 @@
+{
+  "name": "14_nested_three_levels",
+  "title": "Difference three sequence levels deep",
+  "description": "The stress-agent text inside RequestAttributesSequence > ScheduledProtocolCodeSequence > ProtocolContextSequence differs (AGENT A vs AGENT B).",
+  "symptom": "Protocol details buried in nested sequences drive downstream processing and billing, yet are invisible in most viewers' top-level tag lists.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "RequestAttributesSequence[0].ScheduledProtocolCodeSequence[0].ProtocolContextSequence[0].TextValue",
+      "value": "PHARMACOLOGIC STRESS AGENT B"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0040,0275)[0].(0040,0008)[0].(0040,0440)[0].(0040,A160)",
+        "status": "different",
+        "is_priority": false
+      }
+    ],
+    "warnings": []
+  }
+}

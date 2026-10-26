@@ -1,0 +1,43 @@
+{
+  "name": "18_explicit_vs_implicit_vr",
+  "title": "Explicit vs Implicit VR transfer syntax",
+  "description": "A is Explicit VR Little Endian, B is Implicit VR Little Endian. Every value is the same, but implicit VR cannot carry the VR of private tags, so they read back as UN.",
+  "symptom": "After a forward through a gateway that re-encodes to Implicit VR, private tags lose their VRs (become UN) and vendor applications can no longer interpret them.",
+  "transfer_syntax": {
+    "b": "1.2.840.10008.1.2"
+  },
+  "changes": [],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0002,0000)",
+        "status": "different",
+        "is_priority": false
+      },
+      {
+        "path": "(0002,0010)",
+        "status": "different",
+        "is_priority": true
+      },
+      {
+        "path": "(0019,1001)",
+        "status": "different",
+        "is_priority": true,
+        "vr_mismatch": true
+      },
+      {
+        "path": "(0019,1002)",
+        "status": "different",
+        "is_priority": true,
+        "vr_mismatch": true
+      },
+      {
+        "path": "(0019,1003)",
+        "status": "different",
+        "is_priority": true,
+        "vr_mismatch": true
+      }
+    ],
+    "warnings": []
+  }
+}

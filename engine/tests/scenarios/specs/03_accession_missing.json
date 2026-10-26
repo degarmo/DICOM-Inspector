@@ -1,0 +1,23 @@
+{
+  "name": "03_accession_missing",
+  "title": "Accession Number missing",
+  "description": "AccessionNumber is present in A and the element is removed entirely from B.",
+  "symptom": "The study cannot be matched to its order: reports never reconcile and the worklist entry stays open.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "delete",
+      "path": "AccessionNumber"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,0050)",
+        "status": "only_in_a",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

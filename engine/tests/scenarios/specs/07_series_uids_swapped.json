@@ -1,0 +1,35 @@
+{
+  "name": "07_series_uids_swapped",
+  "title": "Rest and stress Series UIDs swapped",
+  "description": "In B the rest image carries the stress SeriesInstanceUID, and its Related Series reference points back at the rest series.",
+  "symptom": "Rest images are filed under the stress series: the processing workstation pairs the wrong acquisitions for perfusion analysis.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "SeriesInstanceUID",
+      "value": "2.25.4200"
+    },
+    {
+      "file": "b",
+      "op": "set",
+      "path": "RelatedSeriesSequence[0].SeriesInstanceUID",
+      "value": "2.25.4100"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,1250)[0].(0020,000E)",
+        "status": "different",
+        "is_priority": true
+      },
+      {
+        "path": "(0020,000E)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

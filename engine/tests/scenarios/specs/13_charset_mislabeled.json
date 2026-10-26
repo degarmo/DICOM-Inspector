@@ -1,0 +1,41 @@
+{
+  "name": "13_charset_mislabeled",
+  "title": "Character set declared wrong for the bytes",
+  "description": "Both files carry the Latin-1 bytes of TÉST^CARDIO^SYNTH, but B declares ISO_IR 192 (UTF-8), which those bytes are not valid in.",
+  "symptom": "Garbled or rejected patient names after a gateway relabels the charset; some receivers crash on decode. The tool warns and shows B's name as raw bytes.",
+  "changes": [
+    {
+      "file": "both",
+      "op": "set",
+      "path": "PatientName",
+      "value": "TÉST^CARDIO^SYNTH"
+    },
+    {
+      "file": "b",
+      "op": "patch_bytes",
+      "find": "ISO_IR 100",
+      "replace": "ISO_IR 192"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,0005)",
+        "status": "different",
+        "is_priority": true
+      },
+      {
+        "path": "(0010,0010)",
+        "status": "different",
+        "is_priority": false
+      }
+    ],
+    "warnings": [
+      {
+        "code": "decode_error",
+        "file": "b",
+        "path": "(0010,0010)"
+      }
+    ]
+  }
+}

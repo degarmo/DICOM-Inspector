@@ -33,6 +33,7 @@ import argparse
 import json
 import re
 import sys
+import warnings
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
@@ -269,26 +270,31 @@ def apply_change(ds: Dataset, change: dict[str, Any], patches: list[tuple[bytes,
 
 def build_pair(spec: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
     """Write <out_dir>/<name>/A.dcm and B.dcm for one scenario."""
-    datasets = {"a": baseline(), "b": baseline()}
-    patches: dict[str, list[tuple[bytes, bytes]]] = {"a": [], "b": []}
-    for change in spec["changes"]:
-        for label in ("a", "b") if change["file"] == "both" else (change["file"],):
-            apply_change(datasets[label], change, patches[label])
+    # Some scenarios plant deliberately invalid values (e.g. a 32-character SH),
+    # which pydicom warns about while building them. What is tested is how the
+    # engine reads them back.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        datasets = {"a": baseline(), "b": baseline()}
+        patches: dict[str, list[tuple[bytes, bytes]]] = {"a": [], "b": []}
+        for change in spec["changes"]:
+            for label in ("a", "b") if change["file"] == "both" else (change["file"],):
+                apply_change(datasets[label], change, patches[label])
 
-    pair_dir = out_dir / spec["name"]
-    pair_dir.mkdir(parents=True, exist_ok=True)
-    paths = []
-    for label in ("a", "b"):
-        syntax = UID(spec.get("transfer_syntax", {}).get(label, ExplicitVRLittleEndian))
-        path = write(datasets[label], pair_dir / f"{label.upper()}.dcm", syntax)
-        if patches[label]:
-            data = path.read_bytes()
-            for find, replace in patches[label]:
-                if data.count(find) != 1:
-                    raise SpecError(f"{spec['name']}: patch target {find!r} must occur exactly once")
-                data = data.replace(find, replace)
-            path.write_bytes(data)
-        paths.append(path)
+        pair_dir = out_dir / spec["name"]
+        pair_dir.mkdir(parents=True, exist_ok=True)
+        paths = []
+        for label in ("a", "b"):
+            syntax = UID(spec.get("transfer_syntax", {}).get(label, ExplicitVRLittleEndian))
+            path = write(datasets[label], pair_dir / f"{label.upper()}.dcm", syntax)
+            if patches[label]:
+                data = path.read_bytes()
+                for find, replace in patches[label]:
+                    if data.count(find) != 1:
+                        raise SpecError(f"{spec['name']}: patch target {find!r} must occur exactly once")
+                    data = data.replace(find, replace)
+                path.write_bytes(data)
+            paths.append(path)
     return paths[0], paths[1]
 
 

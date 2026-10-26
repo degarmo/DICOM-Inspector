@@ -1,0 +1,52 @@
+{
+  "name": "15_sequence_item_count",
+  "title": "Sequence item count differs",
+  "description": "EnergyWindowInformationSequence has 2 energy windows in A and 3 in B.",
+  "symptom": "Reconstruction or scatter correction picks the wrong window by index, producing quantitatively different images.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "append_item",
+      "path": "EnergyWindowInformationSequence",
+      "item": {
+        "EnergyWindowRangeSequence": [
+          {
+            "EnergyWindowLowerLimit": "154.6",
+            "EnergyWindowUpperLimit": "170.0"
+          }
+        ],
+        "EnergyWindowName": "SCATTER HIGH"
+      }
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0054,0012)",
+        "status": "different",
+        "is_priority": false
+      },
+      {
+        "path": "(0054,0012)[2].(0054,0013)",
+        "status": "only_in_b",
+        "is_priority": false
+      },
+      {
+        "path": "(0054,0012)[2].(0054,0013)[0].(0054,0014)",
+        "status": "only_in_b",
+        "is_priority": false
+      },
+      {
+        "path": "(0054,0012)[2].(0054,0013)[0].(0054,0015)",
+        "status": "only_in_b",
+        "is_priority": false
+      },
+      {
+        "path": "(0054,0012)[2].(0054,0018)",
+        "status": "only_in_b",
+        "is_priority": false
+      }
+    ],
+    "warnings": []
+  }
+}

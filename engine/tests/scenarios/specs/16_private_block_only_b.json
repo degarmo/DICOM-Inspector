@@ -1,0 +1,46 @@
+{
+  "name": "16_private_block_only_b",
+  "title": "Private block present only in B",
+  "description": "B carries an extra private block (group 0029, creator SYNTH_VENDOR_02) that A does not have.",
+  "symptom": "Vendor-specific processing parameters appear after an upgrade or a different gateway path; downstream tools behave differently with no visible cause.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "private_block",
+      "group": "0029",
+      "creator": "SYNTH_VENDOR_02",
+      "elements": [
+        {
+          "offset": 1,
+          "vr": "LO",
+          "value": "SYNTH RECON FLAGS"
+        },
+        {
+          "offset": 2,
+          "vr": "US",
+          "value": 7
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0029,0010)",
+        "status": "only_in_b",
+        "is_priority": true
+      },
+      {
+        "path": "(0029,1001)",
+        "status": "only_in_b",
+        "is_priority": true
+      },
+      {
+        "path": "(0029,1002)",
+        "status": "only_in_b",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

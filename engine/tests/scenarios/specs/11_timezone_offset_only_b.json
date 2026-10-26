@@ -1,0 +1,24 @@
+{
+  "name": "11_timezone_offset_only_b",
+  "title": "Timezone offset in one file only",
+  "description": "TimezoneOffsetFromUTC (-0500) is present in B and absent from A.",
+  "symptom": "One system shifts displayed times by the offset and the other does not, so acquisition and report times disagree by hours.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "TimezoneOffsetFromUTC",
+      "value": "-0500"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,0201)",
+        "status": "only_in_b",
+        "is_priority": false
+      }
+    ],
+    "warnings": []
+  }
+}

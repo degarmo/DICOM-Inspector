@@ -1,0 +1,24 @@
+{
+  "name": "04_accession_blank",
+  "title": "Accession Number present but empty",
+  "description": "AccessionNumber is SYNACC000123 in A; in B the element exists but has an empty value.",
+  "symptom": "Looks like a missing order to the RIS, but schema checks that only test for presence pass; a classic silent order-matching failure.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "AccessionNumber",
+      "value": ""
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,0050)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

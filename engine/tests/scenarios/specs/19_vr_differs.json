@@ -1,0 +1,33 @@
+{
+  "name": "19_vr_differs",
+  "title": "Same tag with a different VR",
+  "description": "StudyDescription has the same value in both files but is encoded as LO in A and SH in B.",
+  "symptom": "Strict validators reject the object; receivers that size fields from the VR truncate the value (SH allows 16 characters, LO 64).",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "StudyDescription",
+      "value": "MYOCARDIAL PERFUSION REST/STRESS",
+      "vr": "SH"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,1030)",
+        "status": "different",
+        "is_priority": false,
+        "vr_mismatch": true
+      }
+    ],
+    "warnings": [
+      {
+        "code": "reader_warning",
+        "file": "b",
+        "path": null,
+        "message_contains": "exceeds the maximum length of 16 allowed for VR SH"
+      }
+    ]
+  }
+}

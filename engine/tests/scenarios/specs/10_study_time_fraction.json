@@ -1,0 +1,24 @@
+{
+  "name": "10_study_time_fraction",
+  "title": "Study Time with fractional seconds",
+  "description": "StudyTime is 081530 in A and 081530.000000 in B: the same instant, formatted differently.",
+  "symptom": "Interfaces that match on the exact string (or truncate fields) treat the same exam as two, or fail validation on field length.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "StudyTime",
+      "value": "081530.000000"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,0030)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

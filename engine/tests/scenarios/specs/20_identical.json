@@ -1,0 +1,8 @@
+{
+  "name": "20_identical",
+  "title": "Identical pair",
+  "description": "No changes. Both files are generated from the same baseline.",
+  "symptom": "The control case: a clean pair must produce zero differences, so any reported row is real.",
+  "changes": [],
+  "expected": {"rows": [], "warnings": []}
+}

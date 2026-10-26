@@ -1,0 +1,30 @@
+{
+  "name": "05_patient_name_format",
+  "title": "Patient Name trailing component separators",
+  "description": "PatientName is TEST^CARDIO in A and TEST^CARDIO^^^ in B: the same name with empty trailing components.",
+  "symptom": "Systems that compare names as raw strings see two different patients and flag a demographics mismatch at reconciliation.",
+  "changes": [
+    {
+      "file": "a",
+      "op": "set",
+      "path": "PatientName",
+      "value": "TEST^CARDIO"
+    },
+    {
+      "file": "b",
+      "op": "set",
+      "path": "PatientName",
+      "value": "TEST^CARDIO^^^"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0010,0010)",
+        "status": "different",
+        "is_priority": false
+      }
+    ],
+    "warnings": []
+  }
+}

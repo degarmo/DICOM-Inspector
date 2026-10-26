@@ -1,0 +1,24 @@
+{
+  "name": "09_study_date_rollover",
+  "title": "Study Date shifted by midnight rollover",
+  "description": "StudyDate is 20250314 in A and 20250315 in B, as when a time zone or clock conversion crosses midnight.",
+  "symptom": "Date-range queries and prior-study matching miss the exam; the study shows the wrong day on the worklist.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "StudyDate",
+      "value": "20250315"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0008,0020)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

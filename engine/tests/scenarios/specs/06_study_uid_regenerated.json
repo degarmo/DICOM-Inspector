@@ -1,0 +1,24 @@
+{
+  "name": "06_study_uid_regenerated",
+  "title": "Study Instance UID regenerated",
+  "description": "B has a new StudyInstanceUID; every other element, including the related-series reference, is unchanged.",
+  "symptom": "The images split into a second study: priors and comparisons break and the report attaches to only one of them.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "StudyInstanceUID",
+      "value": "2.25.4999"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0020,000D)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

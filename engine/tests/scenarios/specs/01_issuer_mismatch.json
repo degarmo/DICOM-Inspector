@@ -1,0 +1,24 @@
+{
+  "name": "01_issuer_mismatch",
+  "title": "Issuer of Patient ID differs",
+  "description": "Same Patient ID (00012345) in both files, but IssuerOfPatientID is SYNTH-HOSP-A in A and SYNTH-HOSP-B in B.",
+  "symptom": "Cross-facility identity collision: an MPI or PACS that ignores the issuer merges two different patients who share an MRN, or rejects the study as a mismatch.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "IssuerOfPatientID",
+      "value": "SYNTH-HOSP-B"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0010,0021)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}

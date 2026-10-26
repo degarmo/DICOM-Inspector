@@ -45,7 +45,8 @@ def _row(ea: FlatElement | None, eb: FlatElement | None) -> Row:
         status = ONLY_IN_B
     elif eb is None:
         status = ONLY_IN_A
-    elif ea.vr != eb.vr or ea.compare_key != eb.compare_key:
+    elif ea.vr != eb.vr or ea.compare_key != eb.compare_key or ea.private_creator != eb.private_creator:
+        # The same private tag under a different private creator is a different attribute.
         status = DIFFERENT
     else:
         status = IDENTICAL

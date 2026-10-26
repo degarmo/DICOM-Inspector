@@ -1,0 +1,24 @@
+{
+  "name": "02_patient_id_leading_zeros",
+  "title": "Patient ID leading zeros stripped",
+  "description": "PatientID is 00012345 in A and 12345 in B, as when an interface treats the MRN as a number.",
+  "symptom": "Exact-match patient lookup fails, so the study lands as unmatched or creates a duplicate patient.",
+  "changes": [
+    {
+      "file": "b",
+      "op": "set",
+      "path": "PatientID",
+      "value": "12345"
+    }
+  ],
+  "expected": {
+    "rows": [
+      {
+        "path": "(0010,0020)",
+        "status": "different",
+        "is_priority": true
+      }
+    ],
+    "warnings": []
+  }
+}
