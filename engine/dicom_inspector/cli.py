@@ -42,7 +42,7 @@ _SOP_CLASS_PATH = "(0008,0016)"
 
 
 class UsageError(Exception):
-    pass
+    """Invalid command-line arguments."""
 
 
 class _ArgumentParser(argparse.ArgumentParser):
