@@ -1,16 +1,23 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2023"],
-    "types": ["node"],
+    "lib": [
+      "ES2023"
+    ],
+    "types": [
+      "node"
+    ],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo"
   },
   "include": [
     "electron.vite.config.ts",
-    "vitest.config.ts",
+    "vitest.config.mts",
     "eslint.config.mjs",
     "src/main/**/*",
     "src/preload/**/*",
-    "src/shared/**/*"
+    "src/shared/**/*",
+    "src/renderer/src/lib/filters.ts",
+    "src/renderer/src/lib/format.ts",
+    "src/test/**/*"
   ]
 }
