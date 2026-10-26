@@ -1,0 +1,7 @@
+# Inputs for engine/requirements-lock.txt, the pinned environment used to freeze
+# the engine. Regenerate the lock with:
+#   uv pip compile engine/packaging/requirements.in --universal --python-version 3.11 \
+#     --generate-hashes --output-file engine/requirements-lock.txt
+pydicom==3.0.2
+pyinstaller==6.22.3
+pyinstaller-hooks-contrib==2026.9
