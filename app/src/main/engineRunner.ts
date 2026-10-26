@@ -97,8 +97,7 @@ export function interpretExit(
     if (error.code === 'ENOENT') {
       return failure(
         'engine_not_found',
-        `Could not start the engine: "${command.command}" was not found. Set DICOM_INSPECTOR_PYTHON ` +
-          'to a Python 3.11+ interpreter that has the engine dependencies installed.',
+        `Could not start the engine: "${command.command}" was not found. ${command.notFoundHint}`,
       )
     }
     return failure('engine_failed', `The engine could not run (${error.code}): ${error.message}`)

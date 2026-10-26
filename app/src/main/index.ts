@@ -2,6 +2,8 @@ import { join } from 'node:path'
 
 import { app, BrowserWindow, nativeTheme } from 'electron'
 
+import { missingPackagedEngine } from './engineCommand'
+import { engineMissingPage } from './engineMissing'
 import { registerIpc } from './ipc'
 import { configureSecurity } from './security'
 
@@ -29,7 +31,10 @@ function createWindow(): BrowserWindow {
 
   window.once('ready-to-show', () => window.show())
 
-  if (devServerUrl) {
+  const missingEngine = missingPackagedEngine()
+  if (missingEngine) {
+    void window.loadURL(engineMissingPage(missingEngine))
+  } else if (devServerUrl) {
     void window.loadURL(devServerUrl)
   } else {
     void window.loadFile(join(__dirname, '../renderer/index.html'))

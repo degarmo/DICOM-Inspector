@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { makeResult, makeRow } from '../test/builders'
-import { engineCommand, ENGINE_DIR, type EngineCommand } from './engineCommand'
-import { ENGINE_TIMEOUT_MS, runCompare, type ExecCallback, type ExecError, type ExecFileFn, type ExecOptions } from './engineRunner'
+import { engineCommand, ENGINE_DIR, missingPackagedEngine, type EngineCommand, type EngineRuntime } from './engineCommand'
+import { compareArgs, ENGINE_TIMEOUT_MS, runCompare, type ExecCallback, type ExecError, type ExecFileFn, type ExecOptions } from './engineRunner'
 
-const COMMAND: EngineCommand = { command: '/usr/bin/python3', args: ['-m', 'dicom_inspector'], cwd: '/engine' }
+const COMMAND: EngineCommand = {
+  command: '/usr/bin/python3',
+  args: ['-m', 'dicom_inspector'],
+  cwd: '/engine',
+  notFoundHint: 'Set DICOM_INSPECTOR_PYTHON to a Python 3.11+ interpreter.',
+}
 
 interface Call {
   file: string
@@ -136,13 +141,20 @@ describe('runCompare', () => {
     call.callback(Object.assign(new Error('spawn python ENOENT'), { code: 'ENOENT' }), '', '')
     const result = await outcome
     expect(result).toMatchObject({ ok: false, error: { code: 'engine_not_found' } })
-    if (!result.ok) expect(result.error.message).toContain('DICOM_INSPECTOR_PYTHON')
+    if (!result.ok) expect(result.error.message).toContain(COMMAND.notFoundHint)
   })
 })
 
 describe('engineCommand', () => {
-  it('uses DICOM_INSPECTOR_PYTHON when set, with -m dicom_inspector from engine/', () => {
-    expect(engineCommand({ DICOM_INSPECTOR_PYTHON: '/opt/py/bin/python' })).toEqual({
+  const dev: EngineRuntime = { packaged: false, resourcesPath: '/unused', platform: 'win32' }
+  const packagedWin: EngineRuntime = {
+    packaged: true,
+    resourcesPath: 'C:\\Users\\x\\AppData\\Local\\Programs\\DICOM Inspector\\resources',
+    platform: 'win32',
+  }
+
+  it('uses DICOM_INSPECTOR_PYTHON in dev, with -m dicom_inspector from engine/', () => {
+    expect(engineCommand({ DICOM_INSPECTOR_PYTHON: '/opt/py/bin/python' }, dev)).toMatchObject({
       command: '/opt/py/bin/python',
       args: ['-m', 'dicom_inspector'],
       cwd: ENGINE_DIR,
@@ -150,8 +162,32 @@ describe('engineCommand', () => {
     expect(ENGINE_DIR.replaceAll('\\', '/')).toMatch(/\/dicom-inspector\/engine$/)
   })
 
-  it('falls back to "python"', () => {
-    expect(engineCommand({}).command).toBe('python')
-    expect(engineCommand({ DICOM_INSPECTOR_PYTHON: '' }).command).toBe('python')
+  it('falls back to "python" in dev', () => {
+    expect(engineCommand({}, dev).command).toBe('python')
+    expect(engineCommand({ DICOM_INSPECTOR_PYTHON: '' }, dev).command).toBe('python')
+  })
+
+  it('uses the frozen engine in resources/engine when packaged, ignoring DICOM_INSPECTOR_PYTHON', () => {
+    const command = engineCommand({ DICOM_INSPECTOR_PYTHON: '/opt/py/bin/python' }, packagedWin)
+    const engineDir = `${packagedWin.resourcesPath}${process.platform === 'win32' ? '\\' : '/'}engine`
+    expect(command.command.replaceAll('\\', '/')).toBe(
+      `${packagedWin.resourcesPath}/engine/dicom_inspector_engine.exe`.replaceAll('\\', '/'),
+    )
+    expect(command.cwd.replaceAll('\\', '/')).toBe(engineDir.replaceAll('\\', '/'))
+    expect(command.args).toEqual([])
+    expect(command.notFoundHint).toBe('Reinstall DICOM Inspector.')
+  })
+
+  it('passes only the compare arguments to the frozen engine', () => {
+    const command = engineCommand({}, packagedWin)
+    expect(compareArgs(command, 'a.dcm', 'b.dcm', { force: true })).toEqual(['compare', '--force', '--', 'a.dcm', 'b.dcm'])
+  })
+
+  it('reports a missing packaged engine, and never checks in dev', () => {
+    expect(missingPackagedEngine(packagedWin, () => false)?.replaceAll('\\', '/')).toBe(
+      `${packagedWin.resourcesPath}/engine/dicom_inspector_engine.exe`.replaceAll('\\', '/'),
+    )
+    expect(missingPackagedEngine(packagedWin, () => true)).toBeNull()
+    expect(missingPackagedEngine(dev, () => false)).toBeNull()
   })
 })
