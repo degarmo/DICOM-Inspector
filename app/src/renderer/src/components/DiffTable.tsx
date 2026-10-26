@@ -30,9 +30,16 @@ interface DiffTableProps {
   rows: readonly Row[]
   selectedPath: string | null
   onSelect(path: string): void
+  /** Shown instead of rows when there are none to display. */
+  emptyMessage?: string
 }
 
-export function DiffTable({ rows, selectedPath, onSelect }: DiffTableProps): React.JSX.Element {
+export function DiffTable({
+  rows,
+  selectedPath,
+  onSelect,
+  emptyMessage = 'No rows match the current filters.',
+}: DiffTableProps): React.JSX.Element {
   const ordered = useMemo(() => {
     const { priority, other } = groupRows(rows)
     return { data: [...priority, ...other], priorityCount: priority.length, otherCount: other.length }
@@ -77,7 +84,9 @@ export function DiffTable({ rows, selectedPath, onSelect }: DiffTableProps): Rea
       </div>
       <div ref={scrollRef} role="rowgroup" className="min-h-0 flex-1 overflow-auto" data-testid="diff-table-body">
         {items.length === 0 ? (
-          <p className="px-4 py-8 text-center text-muted">No rows match the current filters.</p>
+          <p className="px-4 py-8 text-center text-muted" data-testid="diff-table-empty">
+            {emptyMessage}
+          </p>
         ) : (
           <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
             {virtualizer.getVirtualItems().map((virtual) => {

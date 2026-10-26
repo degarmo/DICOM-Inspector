@@ -112,7 +112,16 @@ export function App(): React.JSX.Element {
         <>
           <SummaryBar summary={result.summary} />
           <FilterBar filters={filters} shown={visibleRows.length} total={result.rows.length} onChange={setFilters} />
-          <DiffTable rows={visibleRows} selectedPath={selectedPath} onSelect={setSelectedPath} />
+          <DiffTable
+            rows={visibleRows}
+            selectedPath={selectedPath}
+            onSelect={setSelectedPath}
+            emptyMessage={
+              filters.differencesOnly && result.summary.identical === result.summary.total
+                ? `No differences. All ${result.summary.total} elements are identical.`
+                : undefined
+            }
+          />
           {selectedRow && <RowDetails row={selectedRow} onClose={() => setSelectedPath(null)} />}
         </>
       ) : (
