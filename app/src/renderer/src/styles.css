@@ -1,3 +1,90 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
+
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --color-bg: #f4f5f7;
+  --color-panel: #ffffff;
+  --color-sunken: #eceef2;
+  --color-hover: #f0f3f8;
+  --color-selected: #e3ecfb;
+  --color-line: #dcdfe5;
+  --color-line-strong: #c4c9d2;
+  --color-fg: #1b1f27;
+  --color-muted: #5d6573;
+  --color-faint: #8a919d;
+
+  --color-accent: #2457c5;
+  --color-accent-hover: #1d48a6;
+  --color-accent-fg: #ffffff;
+  --color-accent-soft: #e5edfb;
+
+  --color-ok: #1d7a46;
+  --color-ok-soft: #e3f3e9;
+  --color-diff: #9a5b00;
+  --color-diff-soft: #fdf0d9;
+  --color-only-a: #6b3fb8;
+  --color-only-a-soft: #efe7fb;
+  --color-only-b: #0b6f8a;
+  --color-only-b-soft: #ddf1f7;
+  --color-danger: #b42318;
+  --color-danger-soft: #fde8e6;
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fff4d6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f1115;
+    --color-panel: #171a20;
+    --color-sunken: #12151a;
+    --color-hover: #1e232b;
+    --color-selected: #1d2b45;
+    --color-line: #2a2f38;
+    --color-line-strong: #3a414d;
+    --color-fg: #e4e7ec;
+    --color-muted: #a1a8b4;
+    --color-faint: #737b88;
+
+    --color-accent: #5b8def;
+    --color-accent-hover: #7aa3f3;
+    --color-accent-fg: #0b1220;
+    --color-accent-soft: #1b2944;
+
+    --color-ok: #4cc283;
+    --color-ok-soft: #12291d;
+    --color-diff: #f0b44c;
+    --color-diff-soft: #33260f;
+    --color-only-a: #b493f2;
+    --color-only-a-soft: #261c3a;
+    --color-only-b: #5cc6e3;
+    --color-only-b-soft: #0f2a33;
+    --color-danger: #f2766b;
+    --color-danger-soft: #3a1714;
+    --color-warn: #f0c060;
+    --color-warn-soft: #33290f;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
