@@ -9,7 +9,7 @@ export default tseslint.config(
   ...tseslint.configs.strict,
   ...tseslint.configs.stylistic,
   {
-    files: ['src/main/**/*.ts', 'src/preload/**/*.ts', 'src/shared/**/*.ts', '*.config.{ts,mts,mjs}', 'scripts/**/*.mjs'],
+    files: ['src/main/**/*.ts', 'src/preload/**/*.ts', 'src/shared/**/*.ts', '*.config.{ts,mts,mjs}', 'scripts/**/*.mjs', 'e2e/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
   {

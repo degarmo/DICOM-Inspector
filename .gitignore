@@ -12,3 +12,6 @@ engine/tests/fixtures/*
 !engine/tests/fixtures/.gitkeep
 app/node_modules/
 app/out/
+# Raw capture output from npm run demo:capture (frames, timeline, demo-silent.mp4).
+demo/out/
+app/test-results/
