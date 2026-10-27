@@ -1,257 +1,112 @@
 # DICOM Inspector
 
-Compare the headers of two DICOM files side by side.
+Compare the headers of two DICOM files and see the one difference that matters, fully offline.
 
-**DICOM Inspector is fully offline.** Files are only read, pixel data is never
-loaded, and nothing is sent over the network: no telemetry, no crash reports, no
-update checks. The installed app needs no Python or Node.js.
+![DICOM Inspector comparing two synthetic studies: one priority mismatch in Issuer of Patient ID, then the exported report](docs/img/demo.gif)
 
-| Directory  | What it is                                                                                     |
-| ---------- | ---------------------------------------------------------------------------------------------- |
-| `engine/`  | Python comparison engine and CLI. It prints a JSON diff (`schema_version` "1.0"). See [engine/README.md](engine/README.md). `engine/packaging/` freezes it into a standalone executable. |
-| `app/`     | Electron + React desktop interface. It runs the engine as a child process and reads its JSON. |
-| `build/`   | Windows installer build: `build_windows.ps1`, the CI smoke test and the notices generator.    |
-| `docs/`    | [Clean-machine test checklist](docs/CLEAN_MACHINE_TEST.md) and the [mismatch catalog](docs/MISMATCH_CATALOG.md). |
-| `demo/`    | Three synthetic file pairs and a [walkthrough script](demo/README.md) for demos (repo only, not in the installer). |
+## Why this exists
 
-## Prerequisites (development)
+When two imaging systems disagree about the same study, the answer is usually
+one header tag out of hundreds: an issuer, an accession number, a UID. Finding
+it by hand means comparing tag dumps line by line. DICOM Inspector does the
+comparison, puts the tags that break patient and order matching at the top,
+and gives you a report you can attach to a ticket.
 
-- Python 3.11+
-- Node.js 20+ and npm
+## Features
 
-## Run engine and app together in dev mode
+**Every tag, side by side.** File meta, the main dataset and every nested
+sequence, flattened into one table with readable paths.
 
-### 1. Set up the engine (once)
+![Full comparison table with priority tags pinned at the top](docs/img/01-loaded.png)
 
-```sh
-cd engine
-python3 -m venv .venv
-.venv/bin/pip install -e '.[dev]'        # Windows: .venv\Scripts\pip install -e ".[dev]"
-.venv/bin/pytest                         # optional; also generates engine/tests/fixtures/
-```
+**The differences that matter, first.** "Differences only" cuts the table down
+to what changed. Integration-critical tags (patient ID and issuer, accession
+number, study, series and SOP UIDs, SOP Class, dates, character set, transfer
+syntax) and all private tags are flagged as priority and pinned to the top.
 
-### 2. Install the app (once)
+![Differences only: one priority mismatch, Issuer of Patient ID](docs/img/02-differences-only.png)
 
-```sh
-cd app
-npm install
-```
+**Full detail for any row.** Click a row to see its full path, VR and both values.
 
-Electron downloads its binary the first time it starts, not during `npm install`.
+![Selected row with the details pane open](docs/img/03-priority-detail.png)
 
-### 3. Point the app at the engine's Python and start it
+**Subtle cases made visible.** An empty value is shown as *empty*, not confused
+with a missing tag. A value three sequences deep is shown with its full path.
 
-The app runs `<python> -m dicom_inspector` with `engine/` as the working
-directory. `DICOM_INSPECTOR_PYTHON` chooses the interpreter (default: `python`).
+![Accession Number present but empty in file B](docs/img/06-blank-accession.png)
 
-```sh
-cd app
-export DICOM_INSPECTOR_PYTHON="$(cd ../engine && pwd)/.venv/bin/python"
-npm run dev
-```
+![A difference three sequence levels deep, with its full path](docs/img/07-nested-difference.png)
 
-Windows (PowerShell):
+**One-click reports.** Export a self-contained HTML report or a PDF: file
+fingerprints (size, SHA-256, transfer syntax, SOP Class), summary counts,
+priority mismatches first, then every difference.
 
-```powershell
-cd app
-$env:DICOM_INSPECTOR_PYTHON = (Resolve-Path ..\engine\.venv\Scripts\python.exe).Path
-npm run dev
-```
+![Exported HTML report](docs/img/04-report.png)
 
-To try it, drop `engine/tests/fixtures/05_private_block_a.dcm` on File A and
-`05_private_block_b.dcm` on File B, then press Ctrl+Enter (Cmd+Enter on macOS).
+**Built for daily use.** Light and dark themes follow the OS. Keyboard shortcuts
+(Ctrl+O and Ctrl+Shift+O to open, Ctrl+Enter to compare, Ctrl+E to export;
+Cmd on macOS), drag and drop, and a command line:
+`"DICOM Inspector.exe" A.dcm B.dcm --compare`.
 
-## Synthetic mismatch scenarios
+![Dark theme](docs/img/05-dark.png)
 
-`engine/tests/scenarios/` proves the tool catches header mismatches that break
-real imaging integrations. One synthetic nuclear cardiology baseline (rest/stress
-myocardial perfusion, NM Image Storage, fake demographics, a `SYNTH_VENDOR_01`
-private block) is turned into 20 file pairs. Each is defined by a JSON spec in
-`specs/` listing the planted changes and the exact rows and warnings the engine
-must report. All 20 are listed with their real-world symptoms in
-[docs/MISMATCH_CATALOG.md](docs/MISMATCH_CATALOG.md). All data is synthetic.
+## Download and install
 
-Run the whole engine suite (Phase 1 fixtures, scenarios, goldens, robustness and
-regression tests) from `engine/`:
+Windows 10 or 11 (x64). Download `DICOM-Inspector-Setup-0.1.0.exe` from this
+repository's Releases page and run it. It installs for the current user by
+default (no admin rights), with an option to install for all users. No Python or
+other runtime is needed.
 
-```sh
-.venv/bin/pytest                    # everything
-.venv/bin/pytest tests/scenarios    # scenarios and golden files only
-```
+The installer is not code-signed yet, so Windows SmartScreen shows "Windows
+protected your PC". Click **More info**, then **Run anyway**. If Windows blocks
+the downloaded file, right-click it, choose **Properties**, tick **Unblock**
+and click OK.
 
-**Golden files.** `tests/scenarios/goldens/<name>.json` holds the full engine
-output for each scenario, with `files.*.path` normalized. The tests compare
-`python -m dicom_inspector` output to them byte for byte. If the frozen engine
-has been built (`engine/dist/`), they also run against it; the pytest header says
-which engines ran. A stale or missing golden fails the suite. After an
-intentional output change, regenerate them and review the diff:
+## Try it
 
-```sh
-.venv/bin/pytest tests/scenarios --update-goldens
-git diff tests/scenarios/goldens
-```
-
-**Adding a scenario** means adding a spec: copy one in `specs/`, change the
-`changes` and `expected` blocks, then run `--update-goldens`. The generator also
-has a command line:
-
-```sh
-.venv/bin/python tests/scenarios/build_scenarios.py /tmp/pairs   # write every pair as <name>/A.dcm, B.dcm
-.venv/bin/python tests/scenarios/build_scenarios.py --demo       # refresh demo/pairs/
-.venv/bin/python tests/scenarios/build_scenarios.py --catalog    # refresh docs/MISMATCH_CATALOG.md
-```
-
-The app's tests (`npm test` in `app/`) load the same golden outputs to check the
-UI: priority pinning, nested paths, the encoding warning banner, the
-identical-pair empty state, and HTML reports.
-
-## Build the Windows installer
-
-### Prerequisites
-
-- Windows 10 or 11, x64
-- PowerShell 7.2+ (`pwsh`)
-- Python 3.11+ (only to build; the installed app does not need it)
-- Node.js LTS (22 or 24) and npm
-- Git
-
-### One command
-
-From the repo root, in PowerShell 7:
+[demo/pairs/](demo/pairs/) holds three pairs of synthetic files, each with one
+planted mismatch: a different issuer for the same patient ID, a blank accession
+number, and a difference three sequences deep. Drop `A.dcm` and `B.dcm` from a
+folder onto File A and File B, then press Ctrl+Enter. Or, from the repository folder in PowerShell:
 
 ```powershell
-pwsh ./build/build_windows.ps1
-# or with a specific interpreter:
-pwsh ./build/build_windows.ps1 -Python C:\Python312\python.exe
+& "$env:LOCALAPPDATA\Programs\DICOM Inspector\DICOM Inspector.exe" demo\pairs\01_issuer_mismatch\A.dcm demo\pairs\01_issuer_mismatch\B.dcm --compare
 ```
 
-The script stops at the first failing step and names it:
+[demo/README.md](demo/README.md) explains what each pair shows, and
+[docs/MISMATCH_CATALOG.md](docs/MISMATCH_CATALOG.md) lists all 20 test
+scenarios with their real-world symptoms.
 
-1. Freeze the engine (`engine/packaging/build_engine.ps1`). This creates a clean
-   venv from `engine/requirements-lock.txt` (exact versions, hash-checked), runs
-   PyInstaller in onedir mode, then smoke-tests the exe against two fixtures.
-2. Run `engine/packaging/verify_frozen.py`. For every fixture pair, the frozen
-   exe's exit code, stderr and stdout must be byte-identical to
-   `python -m dicom_inspector`. Only `files.*.path` may differ.
-3. Run `npm ci`, `npm test` (including the real-engine integration test) and `npm run lint` in `app/`.
-4. Generate `THIRD_PARTY_NOTICES.txt` from the installed Python and npm packages (`build/generate_notices.py`).
-5. Build the NSIS installer with electron-builder.
-6. Print the installer's path, size, SHA-256 and signature status.
+## How it works
 
-**Output:** `release/DICOM-Inspector-Setup-0.1.0.exe`, about **110 MB**. The
-script prints the exact size; it is mostly Electron/Chromium plus a roughly
-20 MB frozen engine.
-
-CI runs the same script on `windows-latest` for pushes to `main` and for `v*`
-tags ([.github/workflows/windows-build.yml](.github/workflows/windows-build.yml)).
-It then silently installs the result, runs the installed engine with Python
-removed from PATH, launches the app, uninstalls it, checks nothing is left
-behind, and uploads the installer as an artifact.
-
-### What the installer does
-
-- Installs per user by default, to `%LOCALAPPDATA%\Programs\DICOM Inspector`,
-  with no admin rights. The install-mode page also offers "Anyone who uses this
-  computer" (`C:\Program Files\DICOM Inspector`, needs UAC).
-- Adds a Start menu shortcut. A desktop shortcut is an opt-in checkbox on the
-  final page.
-- Ships the frozen engine in `resources\engine\` next to `app.asar`, not inside
-  it, because executables cannot run from inside an asar archive. The app
-  launches it with `windowsHide`, so no console window appears.
-- Uninstalling removes the install folder, the shortcuts, the registry entries
-  and the app's data folder (`%APPDATA%\DICOM Inspector`).
-- No auto-updater, crash reporter or telemetry. The app has no update
-  dependency, electron-builder writes no update feed (`publish: null`), Electron's
-  crash reporter is never started, and the spellchecker (which would download
-  dictionaries) is disabled.
-
-### Code signing
-
-Signing is automatic when a certificate is provided, and skipped otherwise:
-
-```powershell
-$env:CSC_LINK = 'C:\path\to\certificate.pfx'   # or a base64-encoded .pfx
-$env:CSC_KEY_PASSWORD = '...'
-pwsh ./build/build_windows.ps1
+```
+React UI (Electron)  ->  local engine: Python + pydicom, run as a child process  ->  JSON diff  ->  table and report
 ```
 
-In CI, set the repository secrets `CSC_LINK` and `CSC_KEY_PASSWORD`. Without
-them the build still succeeds and produces an **unsigned** installer. Nothing is
-self-signed or faked.
+The engine reads both files' headers, flattens them into one row per tag path,
+and prints a versioned JSON diff. The UI shows it and renders reports. In the
+installed app the engine is a frozen executable shipped next to the UI, so
+nothing else needs to be installed. It is checked against 20 synthetic
+mismatch scenarios with golden-file tests.
 
-Unsigned installers trigger Windows SmartScreen ("Windows protected your PC").
-To run one for testing, click **More info**, then **Run anyway**. If the file
-was downloaded, you may first need to right-click it, choose **Properties**,
-tick **Unblock** and click OK. For distribution, sign with a code-signing
-certificate from a trusted CA. An EV certificate, or a build reputation that
-accumulates over time, is what clears SmartScreen.
+## Build from source
 
-### Clean-machine check
+See [docs/BUILD.md](docs/BUILD.md): running from source, the test suites,
+regenerating the demo media, and building the Windows installer with one command.
 
-Before a release, follow [docs/CLEAN_MACHINE_TEST.md](docs/CLEAN_MACHINE_TEST.md)
-in Windows Sandbox or a fresh VM with no Python and no Node.js.
+## Privacy
 
-## App scripts
+- **Read-only.** Files are opened for reading only and never modified.
+- **Header-only.** Pixel data is never loaded.
+- **No network.** No telemetry, crash reports or update checks. The app blocks
+  every network request, and reports contain no external references.
+- **Synthetic demo data.** Everything in this repository, including the
+  screenshots and the GIF, uses invented patients, sites and devices.
 
-Run these from `app/`:
+Details: [docs/SECURITY.md](docs/SECURITY.md).
 
-| Script          | What it does                                                                      |
-| --------------- | --------------------------------------------------------------------------------- |
-| `npm run dev`   | Start Electron with hot reload.                                                   |
-| `npm run build` | Build main, preload and renderer into `app/out/`.                                 |
-| `npm start`     | Run the built app (`electron-vite preview`).                                      |
-| `npm test`      | Vitest: runner, filters, table, app, report, and one real-engine integration test. |
-| `npm run dist:win` | Build the Windows installer (expects `engine/dist/` and the notices; use `build/build_windows.ps1`). |
-| `npm run icon`  | Regenerate `build/icon.ico` from `build/icon.svg`.                                |
-| `npm run lint`  | ESLint plus `tsc --noEmit` (strict) for the main/preload and renderer projects.   |
+## License
 
-The integration test runs the real engine. It needs `DICOM_INSPECTOR_PYTHON`
-pointing at the engine venv. Without it, the test is skipped and the reason
-appears in the test name.
-
-## Using the app
-
-| Action                   | Keyboard (Cmd on macOS) |
-| ------------------------ | ----------------------- |
-| Open File A              | Ctrl+O                  |
-| Open File B              | Ctrl+Shift+O            |
-| Compare                  | Ctrl+Enter              |
-| Export report            | Ctrl+E                  |
-
-- **Force read (non-standard files)** passes `--force` to the engine, for raw datasets without a preamble.
-- The table pins rows for integration-critical tags (and all private tags) in a **Priority** group at the top.
-- Click a row to see full values in the details pane. Long values also show in full on hover.
-- **Export report** saves a self-contained HTML file or a PDF made from that same HTML.
-
-## Security model
-
-- Renderer: `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`.
-  It reaches the main process only through the typed preload API
-  (`pickFile`, `compare`, `exportReport`, plus a local `pathForFile` for drag-and-drop).
-- IPC handlers reject calls from any frame other than the app page, and validate their arguments.
-- The engine is started with `execFile`, an argument array and no shell.
-  `--` is placed before the file paths so a path can never be read as a flag.
-- Every network request is cancelled in the main process, except the local Vite
-  server in dev. All permission requests are denied, and the spellchecker is off. Navigation away from the
-  app, `window.open` and `<webview>` are blocked.
-- Fonts are bundled from npm (`@fontsource-variable/*`).
-- Content Security Policy for the packaged build:
-
-  ```
-  default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:;
-  connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'
-  ```
-
-  In `npm run dev`, Vite's hot reload additionally needs `'unsafe-inline'` for
-  scripts and styles and `ws://localhost:*` for its websocket. The policy lives in
-  `app/src/shared/csp.ts`.
-- Exported reports carry their own CSP (`default-src 'none'; style-src 'unsafe-inline'`)
-  and contain no scripts or external references.
-
-## Troubleshooting
-
-- **"Comparison engine not available"**: `DICOM_INSPECTOR_PYTHON` is unset or wrong.
-  Point it at `engine/.venv/bin/python` (`engine\.venv\Scripts\python.exe` on Windows).
-- **Electron starts as a plain Node process** (errors such as `bad option`):
-  the shell has `ELECTRON_RUN_AS_NODE=1` set. Some editor-integrated terminals set it.
-  Run `unset ELECTRON_RUN_AS_NODE` first.
+[MIT](LICENSE). Third-party components and their licenses are listed in
+`THIRD_PARTY_NOTICES.txt`, which is generated at build time and installed with
+the app.
