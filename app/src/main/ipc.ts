@@ -3,13 +3,23 @@ import { basename } from 'node:path'
 
 import { BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
 
-import { IPC, type ExportOutcome, type PickedFile } from '../shared/api'
+import { IPC, type ExportOutcome, type OpenFilesRequest, type PickedFile } from '../shared/api'
 import { parseCompareResult, SchemaError } from '../shared/validate'
 import { runCompare } from './engineRunner'
 import { exportReport } from './exportReport'
 import { isTrustedSender } from './security'
 
-export function registerIpc(): void {
+export interface IpcOptions {
+  /** Files named on the command line, checked by the main process. */
+  launchRequest(): Promise<OpenFilesRequest | null>
+}
+
+export function registerIpc(options: IpcOptions): void {
+  ipcMain.handle(IPC.launchRequest, (event) => {
+    assertTrusted(event)
+    return options.launchRequest()
+  })
+
   ipcMain.handle(IPC.pickFile, async (event): Promise<PickedFile | null> => {
     assertTrusted(event)
     const window = BrowserWindow.fromWebContents(event.sender)

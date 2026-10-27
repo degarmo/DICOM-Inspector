@@ -1,5 +1,5 @@
 import { Lock, ScanSearch } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { DiffTable } from './components/DiffTable'
 import { ErrorBanner } from './components/ErrorBanner'
@@ -12,7 +12,7 @@ import { SummaryBar } from './components/SummaryBar'
 import { WarningsBanner } from './components/WarningsBanner'
 import { useComparison } from './hooks/useComparison'
 import { useShortcuts } from './hooks/useShortcuts'
-import type { AppError, ExportFormat } from '../../shared/api'
+import type { AppError, ExportFormat, OpenFilesRequest } from '../../shared/api'
 import { DEFAULT_FILTERS, filterRows, type Filters } from './lib/filters'
 
 export function App(): React.JSX.Element {
@@ -28,8 +28,8 @@ export function App(): React.JSX.Element {
   const [exportError, setExportError] = useState<AppError | null>(null)
 
   // Each new result starts with "Differences only" on, warnings visible and nothing selected.
-  const runCompare = async (): Promise<void> => {
-    const fresh = await comparison.compare()
+  const runCompare = async (pair?: OpenFilesRequest['files']): Promise<void> => {
+    const fresh = await comparison.compare(pair)
     if (!fresh) return
     setFilters((current) => ({ ...current, differencesOnly: true }))
     setWarningsDismissed(false)
@@ -58,6 +58,27 @@ export function App(): React.JSX.Element {
 
   const visibleRows = useMemo(() => (result ? filterRows(result.rows, filters) : []), [result, filters])
   const selectedRow = result?.rows.find((row) => row.path === selectedPath) ?? null
+
+  // Files from the command line, at startup or handed over by a second launch.
+  const openRequest = (request: OpenFilesRequest): void => {
+    comparison.openFiles(request)
+    if (request.compare) void runCompare(request.files)
+  }
+  const openRequestRef = useRef(openRequest)
+  useEffect(() => {
+    openRequestRef.current = openRequest
+  })
+  useEffect(() => {
+    let active = true
+    void window.inspector.launchRequest().then((request) => {
+      if (active && request) openRequestRef.current(request)
+    })
+    const unsubscribe = window.inspector.onOpenFiles((request) => openRequestRef.current(request))
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
 
   useShortcuts({
     openA: () => void comparison.browse('a'),

@@ -1,8 +1,8 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { CompareOutcome, ExportOutcome, InspectorApi, PickedFile } from '../../shared/api'
+import type { CompareOutcome, ExportOutcome, InspectorApi, OpenFilesRequest, PickedFile } from '../../shared/api'
 import { makeResult, sampleResult } from '../../test/builders'
 import { App } from './App'
 
@@ -23,6 +23,8 @@ beforeEach(() => {
     compare: vi.fn<() => Promise<CompareOutcome>>().mockResolvedValue({ ok: true, result: sampleResult() }),
     exportReport: vi.fn<() => Promise<ExportOutcome>>().mockResolvedValue({ ok: true, path: '/out/dicom-diff.html' }),
     pathForFile: vi.fn(() => '/dropped/c.dcm'),
+    launchRequest: vi.fn<() => Promise<OpenFilesRequest | null>>().mockResolvedValue(null),
+    onOpenFiles: vi.fn(() => () => undefined),
   }
   window.inspector = api as unknown as InspectorApi
 })
@@ -139,5 +141,59 @@ describe('App', () => {
     fireEvent.drop(zone, { dataTransfer })
     expect(api.pathForFile).toHaveBeenCalledWith(file)
     expect(await screen.findByText('c.dcm')).toBeInTheDocument()
+  })
+})
+
+
+describe('App opened with files on the command line', () => {
+  const pair: OpenFilesRequest['files'] = {
+    a: { path: '/Scans/Study One/A.dcm', name: 'A.dcm', size: 740 },
+    b: { path: '/Scans/Pr\u00fcfung/B.dcm', name: 'B.dcm', size: 836 },
+  }
+
+  it('loads both files and compares on open with --compare', async () => {
+    api.launchRequest.mockResolvedValue({ files: pair, compare: true, errors: [] })
+    render(<App />)
+    expect(await screen.findByTestId('priority-mismatches')).toBeInTheDocument()
+    expect(api.compare).toHaveBeenCalledWith('/Scans/Study One/A.dcm', '/Scans/Pr\u00fcfung/B.dcm', { force: false })
+    expect(screen.getByRole('button', { name: /^File A: A\.dcm/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^File B: B\.dcm/ })).toBeInTheDocument()
+  })
+
+  it('loads without comparing when --compare is absent', async () => {
+    api.launchRequest.mockResolvedValue({ files: pair, compare: false, errors: [] })
+    render(<App />)
+    expect(await screen.findByRole('button', { name: /^File B: B\.dcm/ })).toBeInTheDocument()
+    expect(api.compare).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /Compare/ })).toBeEnabled()
+  })
+
+  it('shows the normal load-panel error for a missing file', async () => {
+    api.launchRequest.mockResolvedValue({
+      files: { a: pair.a, b: null },
+      compare: false,
+      errors: [{ code: 'file_not_found', message: 'File not found: /Scans/missing.dcm', file: '/Scans/missing.dcm' }],
+    })
+    render(<App />)
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('File not found: missing.dcm')
+    expect(alert).toHaveTextContent('File not found: /Scans/missing.dcm')
+    expect(screen.getByRole('button', { name: /^File A: A\.dcm/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Choose File B' })).toBeInTheDocument()
+    expect(api.compare).not.toHaveBeenCalled()
+  })
+
+  it('loads a pair handed over by a second launch into the open window', async () => {
+    let push: ((request: OpenFilesRequest) => void) | undefined
+    api.onOpenFiles.mockImplementation((listener: (request: OpenFilesRequest) => void) => {
+      push = listener
+      return () => undefined
+    })
+    render(<App />)
+    await loadBoth()
+    expect(push).toBeDefined()
+    act(() => push?.({ files: pair, compare: true, errors: [] }))
+    expect(await screen.findByTestId('priority-mismatches')).toBeInTheDocument()
+    expect(api.compare).toHaveBeenLastCalledWith('/Scans/Study One/A.dcm', '/Scans/Pr\u00fcfung/B.dcm', { force: false })
   })
 })

@@ -40,6 +40,8 @@ beforeEach(() => {
     compare: vi.fn(),
     exportReport: vi.fn(),
     pathForFile: vi.fn(),
+    launchRequest: vi.fn().mockResolvedValue(null),
+    onOpenFiles: vi.fn(() => () => undefined),
   } as unknown as InspectorApi
 })
 
